@@ -92,20 +92,3 @@ them — and immediately re-scores whatever is under the cursor.
   popup (`commands.update()`). Chrome has no equivalent API, so there the button
   opens `chrome://extensions/shortcuts` instead. Either way the browser can
   refuse a combination it reserves for itself.
-
-## Notes
-
-- The SDK (`@typesafe-ai/sdk`) is not bundled. It reads `TYPESAFE_API_KEY` from
-  the environment and pulls node built-ins, neither of which exist in an
-  extension sandbox, so `background.js` calls
-  `POST https://api.typesafe.ai/v1/systemone` directly. The request body matches
-  what the SDK sends.
-- There is no multi-document batch endpoint: one request carries one `state`
-  document plus many questions about it. Adding questions is cheap; adding
-  blocks is not. Since each block is a different document, each hover is its own
-  request — which is why the cache and the 400ms dwell delay matter.
-- Settings saved before multi-question support are migrated on read, in both
-  `background.js` and the popup.
-- `manifest.json` carries both `background.service_worker` (Chrome) and
-  `background.scripts` (Firefox). Each browser reads its own key and ignores the
-  other.
