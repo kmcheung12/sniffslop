@@ -45,7 +45,7 @@ contents you wouldn't want to leave the machine.
 ## Use
 
 1. Add your API key as above.
-2. Press the shortcut (default `Cmd+Shift+Y` / `Ctrl+Shift+Y`) to arm sniff mode on a page.
+2. Press the shortcut (default `Cmd+Shift+X` / `Ctrl+Shift+X`) to arm sniff mode on a page.
 3. Hover any block of text with 25+ words. It outlines grey while the request is
    in flight, then turns green → amber → red and shows a card with one section
    per configured question.
