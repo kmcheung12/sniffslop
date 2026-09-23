@@ -1,7 +1,7 @@
 # SniffSlop
 
-Hover a paragraph, find out how likely it is AI slop. Scores text with the
-[TypeSafe System One](https://docs.typesafe.ai/) score primitive.
+Hover a paragraph, find out how likely it is written by AI, or define whatever questions you want to ask with
+[Jev](https://docs.typesafe.ai/).
 
 https://github.com/kmcheung12/sniffslop/raw/main/demo.webm
 
@@ -25,12 +25,13 @@ signed build.
 
 ## API key
 
-Click the toolbar icon, paste your [TypeSafe](https://typesafe.ai) API key into
-the first field, and hit **Save**. That's the only place it goes.
+Obtain your Jev API key at [typesafe console](https://console.typesafe.ai/keys).
+Paste your API key into the extension by clicking the extension toolbar icon and hit **Save**. 
+Use it at your own risk.
 
 The key is stored with `storage.local`, which keeps it on this machine and this
 browser profile — it is not browser-synced, so it does not travel to your other
-devices. Nothing is collected: there is no telemetry, no analytics, and no
+devices. Nothing is collected by me, no telemetry, no analytics, and no
 server belonging to this extension. The only host it can reach at all is
 `api.typesafe.ai`, because that is the sole entry in `host_permissions`; any
 request anywhere else would be blocked by the browser.
@@ -39,10 +40,6 @@ The key is read only by the background script, which attaches it as a
 `Authorization: Bearer` header on calls to TypeSafe. The content script running
 inside web pages never sees it — it hands text to the background script and gets
 an answer back, so page JavaScript has no path to it.
-
-One thing to be aware of: scoring text means **sending that text to TypeSafe**.
-Each block you hover is posted to their API, so don't arm it on pages whose
-contents you wouldn't want to leave the machine.
 
 ## Use
 
