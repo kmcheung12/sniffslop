@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <h1>SniffSlop</h1>
+
+    <label class="field">
+      <span>TypeSafe API key</span>
+      <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…" />
+    </label>
+
+    <div class="field">
+      <span>Questions <em>all sent in one request</em></span>
+      <div id="questions"></div>
+      <button id="addQuestion" class="ghost" type="button">+ Add question</button>
+    </div>
+
+    <label class="field row">
+      <span>Minimum words per block</span>
+      <input id="minWords" type="number" min="1" max="500" />
+    </label>
+
+    <label class="field row">
+      <span>Model</span>
+      <input id="model" type="text" spellcheck="false" />
+    </label>
+
+    <div class="field">
+      <span>Keyboard shortcut</span>
+      <div class="row">
+        <code id="shortcut">—</code>
+        <button id="editShortcut" class="ghost" type="button">Change</button>
+      </div>
+      <p class="hint" id="shortcutHint"></p>
+    </div>
+
+    <div class="footer">
+      <button id="save" type="button">Save</button>
+      <span id="status"></span>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

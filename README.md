@@ -1,0 +1,111 @@
+# SniffSlop
+
+Hover a paragraph, find out how likely it is AI slop. Scores text with the
+[TypeSafe System One](https://docs.typesafe.ai/) score primitive.
+
+## Install
+
+No build step — it's plain JS, load the folder as-is.
+
+**Chrome**
+
+1. Go to `chrome://extensions`
+2. Turn on **Developer mode** (top right)
+3. **Load unpacked** → pick this folder
+
+**Firefox**
+
+1. Go to `about:debugging#/runtime/this-firefox`
+2. **Load Temporary Add-on…** → pick `manifest.json` inside this folder
+
+Temporary add-ons are cleared when Firefox restarts; a permanent install needs a
+signed build.
+
+## API key
+
+Click the toolbar icon, paste your [TypeSafe](https://typesafe.ai) API key into
+the first field, and hit **Save**. That's the only place it goes.
+
+The key is stored with `storage.local`, which keeps it on this machine and this
+browser profile — it is not browser-synced, so it does not travel to your other
+devices. Nothing is collected: there is no telemetry, no analytics, and no
+server belonging to this extension. The only host it can reach at all is
+`api.typesafe.ai`, because that is the sole entry in `host_permissions`; any
+request anywhere else would be blocked by the browser.
+
+The key is read only by the background script, which attaches it as a
+`Authorization: Bearer` header on calls to TypeSafe. The content script running
+inside web pages never sees it — it hands text to the background script and gets
+an answer back, so page JavaScript has no path to it.
+
+One thing to be aware of: scoring text means **sending that text to TypeSafe**.
+Each block you hover is posted to their API, so don't arm it on pages whose
+contents you wouldn't want to leave the machine.
+
+## Use
+
+1. Add your API key as above.
+2. Press the shortcut (default `Cmd+Shift+Y` / `Ctrl+Shift+Y`) to arm sniff mode on a page.
+3. Hover any block of text with 25+ words. It outlines grey while the request is
+   in flight, then turns green → amber → red and shows a card with one section
+   per configured question.
+
+   The outline colour comes from the first question that maps onto a scale —
+   a `score` (position across its levels) or a `noul` (its probability). Choice
+   answers have no inherent ordering, so if every question is a `choice` the
+   outline stays neutral blue and the card carries the detail.
+
+   **Hue is the answer, saturation is the certainty.** An uncertain answer looks
+   washed out instead of confidently green or red. Confidence gets no row of its
+   own: it is computed from the probability distribution the card already draws,
+   so showing it would restate the bars. Nouls have no confidence field, so
+   certainty is derived from the distance to 0.5.
+4. Shortcut again or `Esc` to disarm.
+
+Results are cached per page by text hash, so re-hovering a block you already
+scored is instant and costs nothing until you reload. Saving anything in the
+popup clears that cache — answers are only valid for the settings that produced
+them — and immediately re-scores whatever is under the cursor.
+
+## Settings
+
+- **Questions** — any number, all three primitives. Every hover sends them in a
+  single request: the API scores each question independently against the same
+  document, and the document is only transmitted once, so N questions cost far
+  less than N calls.
+
+  | type | criteria | answer |
+  |---|---|---|
+  | `score` | ordered array, low → high, 2–10 levels | `score` (weighted position across levels) + `confidence` + `probabilities` |
+  | `choice` | object of `option_name` → description | `choice` + `confidence` + `probabilities` |
+  | `noul` | optional `true`/`false` descriptions | `noul`, a single 0–1 probability of yes |
+
+  The default is one `score` question: `How likely is this text AI slop`, with
+  levels `Likely human` / `50/50 slop` / `AI Slop`. A score of 1.43 there means
+  "leaning slop".
+
+  Switching a question's type converts its criteria to the new shape, since
+  sending an array where the API wants an object is a 422.
+- **Model** — default `jev-latest`. Required by the API.
+- **Minimum words per block** — default 25, raise it to ignore short blurbs.
+- **Shortcut** — on Firefox, **Change** records a new binding directly in the
+  popup (`commands.update()`). Chrome has no equivalent API, so there the button
+  opens `chrome://extensions/shortcuts` instead. Either way the browser can
+  refuse a combination it reserves for itself.
+
+## Notes
+
+- The SDK (`@typesafe-ai/sdk`) is not bundled. It reads `TYPESAFE_API_KEY` from
+  the environment and pulls node built-ins, neither of which exist in an
+  extension sandbox, so `background.js` calls
+  `POST https://api.typesafe.ai/v1/systemone` directly. The request body matches
+  what the SDK sends.
+- There is no multi-document batch endpoint: one request carries one `state`
+  document plus many questions about it. Adding questions is cheap; adding
+  blocks is not. Since each block is a different document, each hover is its own
+  request — which is why the cache and the 400ms dwell delay matter.
+- Settings saved before multi-question support are migrated on read, in both
+  `background.js` and the popup.
+- `manifest.json` carries both `background.service_worker` (Chrome) and
+  `background.scripts` (Firefox). Each browser reads its own key and ignores the
+  other.
