@@ -3,6 +3,8 @@
 Hover a paragraph, find out how likely it is AI slop. Scores text with the
 [TypeSafe System One](https://docs.typesafe.ai/) score primitive.
 
+https://github.com/kmcheung12/sniffslop/raw/main/demo.webm
+
 ## Install
 
 No build step — it's plain JS, load the folder as-is.
@@ -84,11 +86,45 @@ them — and immediately re-scores whatever is under the cursor.
   levels `Likely human` / `50/50 slop` / `AI Slop`. A score of 1.43 there means
   "leaning slop".
 
-  Switching a question's type converts its criteria to the new shape, since
-  sending an array where the API wants an object is a 422.
-- **Model** — default `jev-latest`. Required by the API.
 - **Minimum words per block** — default 25, raise it to ignore short blurbs.
 - **Shortcut** — on Firefox, **Change** records a new binding directly in the
   popup (`commands.update()`). Chrome has no equivalent API, so there the button
   opens `chrome://extensions/shortcuts` instead. Either way the browser can
   refuse a combination it reserves for itself.
+
+## Define your own questions
+
+Slop detection is just the default. The question is whatever you want to ask
+of a paragraph, and you can stack several — they cost one request between
+them. Open the popup, hit **+ Add question**, pick a type, and write the
+instructions.
+
+Pick the type by the shape of the answer you want:
+
+- **`noul`** for a yes/no — *"Does this cite a source?"*, *"Is this a sales
+  pitch?"*. You get one number: the probability of yes. Criteria are optional;
+  add them when "yes" needs pinning down.
+- **`score`** for a spectrum — *"How technical is this?"* with levels
+  `Layperson` → `Practitioner` → `Specialist`. Write the levels in order, low
+  to high. The answer is a weighted position across them, so it lands between
+  levels rather than snapping to one.
+- **`choice`** for named buckets with no ordering — *"What is this paragraph
+  doing?"* with options `argument`, `evidence`, `anecdote`, `filler`. Give
+  each option a description saying when to pick it; that description does most
+  of the work.
+
+A few things that make answers better:
+
+- **Describe the levels, don't just name them.** `Broken, but a workaround
+  exists` beats `Medium`. The model reads the descriptions.
+- **Order matters for `score`, not for `choice`.** Score levels must run low
+  to high; choice options are unordered, which is why a choice answer leaves
+  the outline neutral.
+- **Ask one thing per question.** A level that mixes two dimensions produces a
+  flat distribution — the answer washes out, which shows up as a desaturated
+  outline.
+- **The question id is the key in the API request**, so it gets slugified on
+  save: `Is it technical?` becomes `is_it_technical`.
+
+Changing a question's type converts its criteria to the new shape, because
+sending an array where the API expects an object is a 422.
