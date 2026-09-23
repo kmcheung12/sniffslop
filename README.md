@@ -3,7 +3,7 @@
 Hover a paragraph, find out how likely it is written by AI, or define whatever questions you want to ask with
 [Jev](https://docs.typesafe.ai/).
 
-https://github.com/kmcheung12/sniffslop/raw/main/demo.webm
+[demo.webm](https://github.com/user-attachments/assets/384f5afd-7826-4da4-bb4e-33138787a391)
 
 ## Install
 
