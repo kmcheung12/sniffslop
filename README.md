@@ -1,6 +1,7 @@
 # SniffSlop
 
-Hover a paragraph, find out how likely it is written by AI, or define whatever questions you want to ask with
+Hover a paragraph — or pin, drag across, or grab a whole article — and find out
+how likely it is written by AI, or define whatever questions you want to ask with
 [Jev](https://docs.typesafe.ai/).
 
 [demo.webm](https://github.com/user-attachments/assets/384f5afd-7826-4da4-bb4e-33138787a391)
@@ -59,12 +60,35 @@ an answer back, so page JavaScript has no path to it.
    own: it is computed from the probability distribution the card already draws,
    so showing it would restate the bars. Nouls have no confidence field, so
    certainty is derived from the distance to 0.5.
-4. Shortcut again or `Esc` to disarm.
+4. To judge more than one block as a single piece of text:
+
+   | Gesture | Scope |
+   | --- | --- |
+   | Hover | the block under the cursor, after a short dwell |
+   | Click | pins a block; click more to add, click a pinned one to drop it |
+   | Drag | every block from where you pressed to where you released |
+   | Double-click | the whole article, as reader mode would see it |
+
+   Pinned blocks keep a tinted outline and the card reports how much text the
+   verdict covers (`4 blocks · 310 words`). A selection is scored as one
+   document, not per block, so you get one verdict on the whole passage. While
+   anything is pinned, hovering won't replace it — it dashes an outline around
+   the block under the cursor to show what another click would add.
+5. `Esc` drops the selection; `Esc` with nothing selected — or the shortcut
+   again — disarms.
+
+While armed, clicks belong to SniffSlop and won't follow links or select text.
+
+A selection is judged as a whole, so individual blocks in it can be shorter than
+the word minimum — only the total has to clear it. The maximum works the other
+way: text past it is trimmed and the card tells you so, rather than the request
+being refused.
 
 Results are cached per page by text hash, so re-hovering a block you already
 scored is instant and costs nothing until you reload. Saving anything in the
 popup clears that cache — answers are only valid for the settings that produced
-them — and immediately re-scores whatever is under the cursor.
+them — and immediately re-scores the current selection or whatever is under the
+cursor.
 
 ## Settings
 
@@ -83,7 +107,13 @@ them — and immediately re-scores whatever is under the cursor.
   levels `Likely human` / `50/50 slop` / `AI Slop`. A score of 1.43 there means
   "leaning slop".
 
-- **Minimum words per block** — default 25, raise it to ignore short blurbs.
+- **Minimum words** — default 25, raise it to ignore short blurbs. It applies to
+  a selection's total, not to each block, so pinning several fragments is how you
+  score text that is too chopped up to hover.
+- **Maximum words** — default 20000, the practical size of Jev's 32k-token state
+  budget. A longer selection is trimmed to fit rather than refused, and the card
+  says what it was judged on (`1 block · 40000 words · judged on the first
+  19200`). Lower it to cap what a single sniff can spend.
 - **Shortcut** — on Firefox, **Change** records a new binding directly in the
   popup (`commands.update()`). Chrome has no equivalent API, so there the button
   opens `chrome://extensions/shortcuts` instead. Either way the browser can

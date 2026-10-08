@@ -13,8 +13,13 @@ const DEFAULTS = {
   apiKey: "",
   questions: DEFAULT_QUESTIONS,
   minWords: 25,
+  maxWords: 20000,
   model: "jev-latest",
 };
+
+// Jev's state budget is 32k tokens — about 24k words. Anything above this would
+// be clamped by the API instead of by us, so don't pretend to accept it.
+const MAX_WORDS_CEILING = 24000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -424,6 +429,10 @@ $("save").addEventListener("click", async () => {
     apiKey: $("apiKey").value.trim(),
     questions,
     minWords: Math.max(1, Number($("minWords").value) || DEFAULTS.minWords),
+    maxWords: Math.min(
+      MAX_WORDS_CEILING,
+      Math.max(1, Number($("maxWords").value) || DEFAULTS.maxWords),
+    ),
     model: $("model").value.trim() || DEFAULTS.model,
   });
 
@@ -437,6 +446,7 @@ $("save").addEventListener("click", async () => {
   const s = { ...DEFAULTS, ...(await api.storage.local.get(DEFAULTS)) };
   $("apiKey").value = s.apiKey;
   $("minWords").value = s.minWords;
+  $("maxWords").value = s.maxWords;
   $("model").value = s.model;
 
   // Migrate the pre-multi-question layout.

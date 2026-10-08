@@ -19,8 +19,13 @@
     </div>
 
     <label class="field row">
-      <span>Minimum words per block</span>
+      <span>Minimum words <em>total, not per block</em></span>
       <input id="minWords" type="number" min="1" max="500" />
+    </label>
+
+    <label class="field row">
+      <span>Maximum words <em>longer selections are trimmed</em></span>
+      <input id="maxWords" type="number" min="1" max="24000" />
     </label>
 
     <label class="field row">

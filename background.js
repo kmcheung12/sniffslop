@@ -16,6 +16,10 @@ const DEFAULTS = {
   apiKey: "",
   questions: DEFAULT_QUESTIONS,
   minWords: 25,
+  // Jev takes 32k tokens of state, roughly 24k words, so the default ceiling is
+  // the model's rather than an opinion about cost — a maxed request is a tenth
+  // of a cent. Lower it to put a tighter budget on what one sniff may send.
+  maxWords: 20000,
   model: "jev-latest", // required by the API; omitting it is a 422
 };
 

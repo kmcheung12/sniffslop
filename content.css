@@ -9,6 +9,21 @@
   outline-style: dashed !important;
 }
 
+/* A pinned or dragged block keeps its outline after the pointer leaves, so it
+   also gets a wash of colour — otherwise a stale outline looks like hover. */
+.sniffslop-pick {
+  background-color: color-mix(in srgb, var(--sniffslop-color, #9aa0a6) 14%, transparent) !important;
+}
+
+/* What the cursor is over while a selection is pinned: not a verdict, just an
+   invitation to click. Faint on purpose — the scored blocks stay the loud ones. */
+.sniffslop-cand {
+  outline: 2px dashed #9aa0a6 !important;
+  outline-offset: 2px !important;
+  border-radius: 3px;
+  cursor: pointer !important;
+}
+
 .sniffslop-card {
   position: fixed;
   z-index: 2147483647;
@@ -113,6 +128,14 @@
 
 .sniffslop-err {
   color: #f28b82;
+}
+
+.sniffslop-scope {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #2b2e35;
+  color: #777c85;
+  font-size: 11px;
 }
 
 .sniffslop-row {
