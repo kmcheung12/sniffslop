@@ -25,25 +25,35 @@ let questions = [];
 // ---------- criteria shapes ----------
 //
 // score:  ordered array of level descriptions, low -> high
-// choice: object of option name -> description (or null)
+// choice: ordered array of [option name, description] pairs
 // noul:   optional object with "true" / "false" descriptions
+//
+// The API wants choice criteria as an object keyed by option name, but a
+// half-typed or repeated name would collide and silently merge two options, so
+// while editing they stay a pair list and only become an object in normalize().
 //
 // Switching type has to convert between these or the API 422s.
 
 function convertCriteria(criteria, from, to) {
   if (from === to) return criteria;
 
-  const asList = Array.isArray(criteria)
-    ? criteria
-    : Object.entries(criteria ?? {}).map(([k, v]) => (typeof v === "string" && v ? `${k}: ${v}` : k));
+  let asList;
+  if (from === "score") asList = criteria ?? [];
+  else if (from === "choice") asList = choiceEntries(criteria).map(([k, v]) => (v ? `${k}: ${v}` : k));
+  else asList = Object.entries(criteria ?? {}).map(([k, v]) => (v ? `${k}: ${v}` : k));
 
   if (to === "score") return asList.length >= 2 ? asList : ["Low", "High"];
   if (to === "choice") {
-    if (!Array.isArray(criteria) && criteria && typeof criteria === "object") return criteria;
     const entries = asList.map((label, i) => [slug(label) || `option_${i + 1}`, ""]);
-    return Object.fromEntries(entries.length >= 2 ? entries : [["yes", ""], ["no", ""]]);
+    return entries.length >= 2 ? entries : [["yes", ""], ["no", ""]];
   }
   return {}; // noul: start with no criteria, they're optional
+}
+
+// Choice criteria as a pair list, accepting the object shape kept in storage.
+function choiceEntries(criteria) {
+  if (Array.isArray(criteria)) return criteria.map(([k, v]) => [k, v ?? ""]);
+  return Object.entries(criteria ?? {}).map(([k, v]) => [k, v ?? ""]);
 }
 
 function slug(text) {
@@ -116,25 +126,24 @@ function renderScoreCriteria(q, host) {
 }
 
 function renderChoiceCriteria(q, host) {
-  const entries = Object.entries(q.criteria ?? {});
+  q.criteria = choiceEntries(q.criteria);
+  const entries = q.criteria;
   const list = document.createElement("ul");
 
   entries.forEach(([key, value], i) => {
     const li = document.createElement("li");
     const keyInput = textInput(key, "option_name", (e) => {
-      const next = Object.entries(q.criteria);
-      next[i] = [e.target.value, value];
-      q.criteria = Object.fromEntries(next);
+      entries[i][0] = e.target.value;
     });
     keyInput.className = "key";
 
     li.append(
       keyInput,
-      textInput(value ?? "", "when to pick it", (e) => {
-        q.criteria[key] = e.target.value;
+      textInput(value, "when to pick it", (e) => {
+        entries[i][1] = e.target.value;
       }),
       iconButton("×", "Remove option", entries.length <= 2, () => {
-        delete q.criteria[key];
+        entries.splice(i, 1);
         render();
       }),
     );
@@ -147,7 +156,7 @@ function renderChoiceCriteria(q, host) {
   add.className = "ghost";
   add.textContent = "+ Add option";
   add.addEventListener("click", () => {
-    q.criteria[`option_${Object.keys(q.criteria).length + 1}`] = "";
+    q.criteria.push([`option_${q.criteria.length + 1}`, ""]);
     render();
   });
   host.appendChild(add);
@@ -364,8 +373,9 @@ function validate(list) {
       if (levels.length < 2) return `"${id}" needs at least 2 levels.`;
     }
     if (q.type === "choice") {
-      const keys = Object.keys(q.criteria).filter((k) => k.trim());
-      if (keys.length < 2) return `"${id}" needs at least 2 options.`;
+      const names = choiceEntries(q.criteria).map(([k]) => slug(k)).filter(Boolean);
+      if (names.length < 2) return `"${id}" needs at least 2 options.`;
+      if (new Set(names).size !== names.length) return `"${id}" has two options with the same name.`;
     }
   }
   return null;
@@ -378,9 +388,9 @@ function normalize(list) {
       out.criteria = q.criteria.map((c) => c.trim()).filter(Boolean);
     } else if (q.type === "choice") {
       out.criteria = Object.fromEntries(
-        Object.entries(q.criteria)
-          .filter(([k]) => k.trim())
-          .map(([k, v]) => [slug(k), v?.trim() ? v.trim() : null]),
+        choiceEntries(q.criteria)
+          .map(([k, v]) => [slug(k), v.trim() ? v.trim() : null])
+          .filter(([k]) => k),
       );
     } else {
       const entries = Object.entries(q.criteria ?? {}).filter(([, v]) => v?.trim());
@@ -435,6 +445,10 @@ $("save").addEventListener("click", async () => {
     : structuredClone(DEFAULT_QUESTIONS);
   if (typeof s.question === "string" && !Array.isArray(s.questions)) {
     questions = [{ id: "slop", type: "score", instructions: s.question, criteria: s.criteria ?? DEFAULT_QUESTIONS[0].criteria }];
+  }
+  // Choice options are stored as an object but edited as a pair list.
+  for (const q of questions) {
+    if (q.type === "choice") q.criteria = choiceEntries(q.criteria);
   }
 
   render();
